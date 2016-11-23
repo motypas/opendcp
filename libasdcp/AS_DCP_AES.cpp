@@ -25,7 +25,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /*! \file    AS_DCP_AES.h
-    \version $Id: AS_DCP_AES.cpp,v 1.13 2009/10/15 17:31:27 jhurst Exp $       
+    \version $Id: AS_DCP_AES.cpp,v 1.14 2014/03/14 21:53:38 jhurst Exp $       
     \brief   AS-DCP library, AES wrapper
 */
 
@@ -39,10 +39,9 @@ using Kumu::DefaultLogSink;
 using namespace ASDCP;
 const int KEY_SIZE_BITS = 128;
 
-#include <openssl/aes.h>
-#include <openssl/sha.h>
-#include <openssl/bn.h>
-#include <openssl/err.h>
+#include <libcrypto/aes.h>
+#include <libcrypto/err.h>
+#include <libcrypto/sha1.h>
 
 
 void
@@ -58,6 +57,7 @@ print_ssl_error()
 class ASDCP::AESEncContext::h__AESContext : public AES_KEY
 {
 public:
+  Kumu::SymmetricKey m_KeyBuf;
   byte_t m_IVec[CBC_BLOCK_SIZE];
 };
 
@@ -76,8 +76,9 @@ ASDCP::AESEncContext::InitKey(const byte_t* key)
     return RESULT_INIT;
 
   m_Context = new h__AESContext;
+  m_Context->m_KeyBuf.Set(key);
 
-  if ( AES_set_encrypt_key(key, KEY_SIZE_BITS, m_Context) )
+  if ( AES_set_encrypt_key(m_Context->m_KeyBuf.Value(), KEY_SIZE_BITS, m_Context) )
     {
       print_ssl_error();
       return RESULT_CRYPT_INIT;
@@ -159,6 +160,7 @@ ASDCP::AESEncContext::EncryptBlock(const byte_t* pt_buf, byte_t* ct_buf, ui32_t 
 class ASDCP::AESDecContext::h__AESContext : public AES_KEY
 {
 public:
+  Kumu::SymmetricKey m_KeyBuf;
   byte_t m_IVec[CBC_BLOCK_SIZE];
 };
 
@@ -174,11 +176,12 @@ ASDCP::AESDecContext::InitKey(const byte_t* key)
   KM_TEST_NULL_L(key);
 
   if ( m_Context )
-    return  RESULT_INIT;
+    return RESULT_INIT;
 
   m_Context = new h__AESContext;
+  m_Context->m_KeyBuf.Set(key);
 
-  if ( AES_set_decrypt_key(key, KEY_SIZE_BITS, m_Context) )
+  if ( AES_set_decrypt_key(m_Context->m_KeyBuf.Value(), KEY_SIZE_BITS, m_Context) )
     {
       print_ssl_error();
       return RESULT_CRYPT_INIT;
