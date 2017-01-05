@@ -82,7 +82,7 @@ opendcp_image_t *opendcp_image_create(int n_components, int w, int h) {
 }
 
 /* create opendcp image structure for float */
-opendcp_image_t *opendcp_image_float_create(int n_components, int w, int h) {
+opendcp_image_t *opendcp_image_create_float(int n_components, int w, int h) {
     int x;
     opendcp_image_t *image = 00;
 
@@ -254,13 +254,13 @@ int opendcp_image_readline_float(opendcp_image_t *image, int y, unsigned char *d
         int pixel1_r = (int)4095*image->component[2].float_data[i+1];
         /* put pixel data in dbuffer */
         dbuffer[d + 0] = pixel0_b >> 4;
-        dbuffer[d + 1] = (pixel0_b & 0x0f) << 4 ) | ((pixel0_g >> 8) & 0x0f);
+        dbuffer[d + 1] = ((pixel0_b & 0x0f) << 4 ) | ((pixel0_g >> 8) & 0x0f);
         dbuffer[d + 2] = pixel0_g;
         dbuffer[d + 3] = pixel0_r >> 4;
-        dbuffer[d + 4] = (pixel0_r & 0x0f) << 4 ) | ((pixel1_b >> 8) & 0x0f);
+        dbuffer[d + 4] = ((pixel0_r & 0x0f) << 4 ) | ((pixel1_b >> 8) & 0x0f);
         dbuffer[d + 5] = pixel1_b;
         dbuffer[d + 6] = (pixel1_g >> 4);
-        dbuffer[d + 7] = (pixel1_g << 4 ) | (pixel1_r >> 8) & 0x0f);
+        dbuffer[d + 7] = ((pixel1_g << 4 ) | (pixel1_r >> 8) & 0x0f);
         dbuffer[d + 8] = pixel1_r;
         d += 9;
     }
@@ -373,7 +373,7 @@ int adjust_headroom(int p) {
 }
 
 /* dci transfer (int data) */
-int dci_transfer(float p) {
+int dci_transfer(int p) {
     int v;
 
     v = (pow((p * DCI_COEFFICENT), DCI_DEGAMMA) * COLOR_DEPTH);
@@ -383,8 +383,9 @@ int dci_transfer(float p) {
     return v;
 }
 
-/* dci transfer (floatt data) */
-float dci_transfer(float p) {
+
+/* dci transfer (float data) */
+float dci_transfer_float(float p) {
     float v;
 
     v = pow((p * DCI_COEFFICENT), DCI_DEGAMMA);
@@ -395,14 +396,14 @@ float dci_transfer(float p) {
 }
 
 /* dci transfer inverse (int data) */
-int dci_transfer_inverse(float p) {
+int dci_transfer_inverse(int p) {
     p = p / COLOR_DEPTH;
 
     return (pow(p, 1 / DCI_GAMMA));
 }
 
 /* dci transfer inverse (float data) */
-float dci_transfer_inverse(float p) {
+float dci_transfer_inverse_float(float p) {
 
     return (pow(p, 1 / DCI_GAMMA));
 }
